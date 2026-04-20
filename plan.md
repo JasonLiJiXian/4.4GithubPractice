@@ -4,3 +4,5 @@
 Create a public GitHub repository
 Use main branch and dev branches
 Make commits and pull requests
+
+Create two issues
