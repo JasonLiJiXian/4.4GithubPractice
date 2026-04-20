@@ -1,10 +1,10 @@
-# Project Title
+# HW 4.4 GitHub Practice
 
-Write a 1-2 sentences that quickly and clearly convey what your repo is for.
+This assignment is aimed to practice create repo by github and demonstrates the use of GitHub. It contains the work from HW 4.3, which contain a qmd file.
 
 ## Overview
 
-Expand on those introductory sentences with a brief but informative description of your project's purpose and goals. This section should help visitors decide whether they should dig deeper into your repo/project.
+This project practices key GitHub skills including creating repositories, branching, committing, pull requests, and using the Issues system. The main deliverable is a Quarto (.qmd) file from HW 4.3 along with its rendered PDF output.
 
 ### Interesting Insight (Optional)
 
@@ -12,17 +12,26 @@ This is optional but highly recommended. You'll include one interesting insight 
 
 ## Data Sources and Acknowledgements
 
-Be sure to list where you got any data used within the project. Be sure to acknowledge any one whose work or elements you're drawing upon.
+No external data is used
 
 ## Current Plan
 
-Provide some information about what you intend to doe with the project. You can additionally refer the visitor to your detailed plan document.
+Create a public GitHub repository
+Use main branch and dev branches
+Make commits and pull requests
+
+Create two issues
+Modify my commit Messages make sure it is clear
+Modify readme.md file
 
 ## Repo Structure
 
-Use this section to explain the structure of your repo. This should help visitors quickly figure out where they should look to find certain elements. Further, you can use this space to highlight and briefly explain important/key files in the repo.
-
+There is 'README.md' for overview of the project
+There is 'plan.md' for checking the detail of the plan
+There is 'HW #4.3 A First QMD File.qmd' Quarto source file from HW 4.3
+There is 'HW 4.3 A First QMD File.pdf' Rendered output
 
 ## Authors
 
-Give information about who are the authors of the project and how people can get in touch if they have questions.
+JiXian Li (Jason) - STAT184 Student at Penn State University  
+GitHub: JasonLiJiXian
