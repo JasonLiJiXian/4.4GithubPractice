@@ -1,0 +1,432 @@
+---
+title: "HW #4.3: A First QMD File"
+subtitle: "STAT184"
+author: "JiXianLi"
+date: "April. 13, 2026"
+format: 
+  pdf: 
+    toc: false
+    number-sections: true
+    number-depth: 5
+    fig-align: center
+    cap-location: top
+    geometry: 
+      - top=1in
+      - left=1in
+      - right=1in
+      - bottom=1in
+    colorlinks: true
+execute: 
+  echo: false
+  warning: false
+---
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(patchwork)
+```
+# Busiest Airports Analysis
+## Basic Information Introduction of Busiest Airports
+In this part, I will help passengers to understand the information about the busiest airports in the world. I will mainly analyze six airports' passenger flow, so that it is easier for passengers to understand the information about the airports. The airports I analyse include Beijing Daxing International Airport(PKX), Dubai International Airport(DXB), Frankfurt Airport(FRA), Hartsfield-Jackson Atlanta International Airport(ATL), Shanghai Pudong International Airport(PVG), and Tokyo Haneda Airport(HND).
+```{r}
+# data record of airports
+airport_data <- data.frame(
+  Airport = c(
+    "Hartsfield-Jackson Atlanta International Airport",
+    "Frankfurt Airport",
+    "Beijing Daxing International Airport",
+    "Dubai International Airport",
+    "Tokyo Haneda Airport",
+    "Shanghai Pudong International Airport"
+  ),
+  IATA = c("ATL", "FRA", "PKX", "DXB", "HND", "PVG"),
+  `2020` = c(42918685, 18768601, 16089282, 25836771, 31055210, 30476531),
+  `2021` = c(75704760, 24812849, 25051012, 29110609, 25876429, 32206814),
+  `2022` = c(93699630, 48918482, 10277623, 66069981, 50290705, 14179177),
+  `2023` = c(104653451, 59355389, 39395242, 86994365, 78719302, 54476397),
+  `2024` = c(108067766, 61564957, 49441029, 92331506, 85900167, 76787039),
+  `2025` = c(106302208, 63189666, 53618949, 95200000, 91430000, 84994548),
+  check.names = FALSE
+)
+
+tidy_airport_data <- airport_data %>%
+  pivot_longer(
+    cols = `2020`:`2025`,
+    names_to = "Year",
+    values_to = "Total_Passengers"
+  ) %>%
+  mutate(Year = as.numeric(Year))
+```
+```{r}
+#| label: tbl-airportsSummaryTable
+#| tbl-cap: "Annual Passenger Traffic at Busiest Airports (2020–2025)"
+#| tbl-pos: H
+#| html-table-processing: none
+#| lst-label: lst-table1
+#| lst-cap: "Code Chunk for Making Table"
+# Make Busiest Airports Table ----
+airport_data |>
+  kable(
+    digits = 0,
+    col.names = c("Airport", "IATA", "2020", "2021", "2022",
+                  "2023", "2024", "2025"),
+    format.args = list(big.mark = ","),
+    align = "llrrrrrr",
+    booktabs = TRUE
+  ) |>
+  kable_classic() |>
+  column_spec(1, width = "4.5cm") |>
+  kable_styling(
+    latex_options = c("hold_position", "scale_down"),
+    position = "center",
+    font_size = 9
+  )
+```
+@tbl-airportsSummaryTable records the information on the six airports from 2020 to 2025, with the number of passengers for each airport.However, from the numerical and textual data, the changes are not very intuitive or obvious. A line graph can make it clearer to see the annual variations.
+
+\newpage
+## Airport Data Analysis
+```{r}
+#| label: fig-airportsPassengers
+#| fig-cap: "Total Passengers Change from 2020 to 2025 Based on the Top 6 Busiest Airports"
+#| fig-pos: H
+#| fig-width: 9
+#| fig-height: 4.5
+# Plot Passenger Trends ----
+ggplot(tidy_airport_data, aes(x = Year, y = Total_Passengers, color = Airport)) +
+  geom_line() +
+  geom_point() +
+  scale_x_continuous(breaks = 2020:2025) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(
+    x = "Year",
+    y = "Total Passengers",
+    color = "Airport"
+  ) +
+  theme_bw() +
+  theme(
+    legend.position = "bottom",
+    legend.text = element_text(size = 7),
+    legend.key.size = unit(0.4, "cm")
+  ) +
+  guides(color = guide_legend(nrow = 2))
+```
+As shown in @fig-airportsPassengers, the x-axis is the years, and the y-axis is the number of passengers. The line in the graph shows the change in the number of passengers. Based on the data, the Hartsfield-Jackson Atlanta International Airport has always been in the leading position. The passenger numbers at two airports in China dropped sharply in 2022(It might be caused by COVID-19). The other three airports are all experiencing steady growth. Among them, Dubai International Airport has the fastest growth rate, while Frankfurt Airport has the slowest.
+
+\newpage
+# Monte Carlo Numerical Integration
+## Basic Information Introduction of Monte Carlo Numerical Integration
+This section will use dot plots to simulate Monte Carlo numerical integration, and let learners have a visual version to understand the integration.
+
+## Monte Carlo Numerical Integration Simulation Data Analysis
+```{r}
+#| label: fig-monteCarlo
+#| fig-cap: "Monte Carlo Integration Distribution at n = 10, 100, 1000, 10000"
+#| fig-pos: H
+#| fig-width: 8
+#| fig-height: 7
+# Monte Carlo Numerical Integration Plot ----
+set.seed(184)
+
+MonteCarloSim <- function(n, x_min, x_max, y_min, y_max) {
+  x <- runif(n, min = x_min, max = x_max)
+  y <- runif(n, min = y_min, max = y_max)
+  data.frame(x = x, y = y)
+}
+
+x_min <- 0; x_max <- 1
+y_min <- 0; y_max <- 1.5
+
+make_plot <- function(n) {
+  sim_data <- MonteCarloSim(n, x_min, x_max, y_min, y_max) %>%
+    mutate(
+      actual_y = dbeta(x, shape1 = 2, shape2 = 2),
+      flag = ifelse(y <= actual_y, "below", "above")
+    )
+  ggplot(sim_data, aes(x = x, y = y)) +
+    stat_function(
+      fun = dbeta,
+      args = list(shape1 = 2, shape2 = 2),
+      xlim = c(x_min, x_max)
+    ) +
+    geom_point(aes(color = flag),
+               size = ifelse(n <= 100, 1.5, 0.6),
+               alpha = ifelse(n <= 100, 0.8, 0.4)) +
+    scale_color_manual(
+      values = c("above" = "red", "below" = "blue"),
+      labels = c("above" = "Above curve", "below" = "Below curve")
+    ) +
+    labs(title = paste0("n = ", format(n, big.mark = ",")),
+         x = "x", y = "y", color = NULL) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(size = 10, hjust = 0.5),
+      legend.position = "bottom",
+      legend.text = element_text(size = 7),
+      aspect.ratio = 0.8
+    )
+}
+
+p1 <- make_plot(10)
+p2 <- make_plot(100)
+p3 <- make_plot(1000)
+p4 <- make_plot(10000)
+
+(p1 | p2) / (p3 | p4) +
+  plot_layout(guides = "collect") &
+  theme(legend.position = "bottom")
+```
+In @fig-monteCarlo. Four different graphs show the simulation of Monte Carlo Numerical Integration. The sample sizes are 10, 100, 1000, and 10,000, respectively. The points are randomly scattered on the graph. If the point is blue means it is below the curve, and if it is red means it is above the curve. From @fig-monteCarlo, we can find that with the increase of the sample size n, the simulation dot plot on the graph would be closer to the perfect parabola. The figures show the random plot of the dots. In order to calculate the integration, we should use the ratio of points located below the curve to the total number of points, which is n, multiplied by the area of the rectangle, which gives an estimate of the integral. Based on the simulation figure, with n=10000, the estimated integral of Beta(2,2) is about 1.
+
+# Planning and Prompting GenAI Tools
+## plan
+### Goals
+Based on the calcium.csv file, tidying and wrangling the data, producing the graph or plot helps others to understand the data, and write a narrative to explain the final result. After finishing this part by myself, use the GenAI tool I chose to create another result, and finally compared the results between Plan-Informed GenAI Results and Generic GenAI Results.
+
+### Needs
+First, we need the raw data from the calcium.csv file. Second, we need a tidying and wrangling version of the calcium.csv file. Third, we need to visualize the data by using a graph or a plot with clear labels. Finally, we need to analyze the data and the graph.
+
+### Steps
+1. Split the eight unnamed columns into two groups. (which represent the null treatment group and the exercise group)
+2. Rename each column to make every name of the column is clear.
+3. Rename each row to make every name of the row is clear.
+4. There is one missing row, so I should remove only where the calcium value is blank.
+5. Check the final data, make sure it is tidied and wrangled.
+6. Use tidied and wrangled to create the graph.
+7. The graph should have clear labels, correct data, a well-designed size, and so on.
+
+\newpage
+### Tidied and Wrangled Data
+```{r}
+#| label: tbl-calciumTidy
+#| tbl-cap: "Tidied and Wrangled Data(separate with group)"
+#| tbl-pos: H
+
+raw <- read_csv("calcium.csv", col_names = FALSE, show_col_types = FALSE)
+
+null_group <- raw[, 1:4]
+diet_group <- raw[, 5:8]
+
+colnames(null_group) <- c("Year 0", "Year 1", "Year 2", "Year 3")
+colnames(diet_group) <- c("Year 0", "Year 1", "Year 2", "Year 3")
+
+null_group <- null_group |>
+  mutate(
+    Participant = paste0("Participant ", row_number()),
+    Group       = "Null Treatment"
+  )
+
+diet_group <- diet_group |>
+  mutate(
+    Participant = paste0("Participant ", row_number()),
+    Group       = "Exercise"
+  )
+
+null_group <- null_group |> filter(!is.na(`Year 0`))
+diet_group <- diet_group |> filter(!is.na(`Year 0`))
+
+calcium_tidy <- bind_rows(null_group, diet_group) |>
+  select(Group, Participant, `Year 0`, `Year 1`, `Year 2`, `Year 3`)
+
+calcium_tidy |>
+  kable(
+    digits    = 1,
+    align     = "llrrrr",
+    booktabs  = TRUE,
+    col.names = c("Group", "Participant", "Year 0", "Year 1", "Year 2", "Year 3")
+  ) |>
+  kable_classic() |>
+  kable_styling(
+    latex_options = c("hold_position", "repeat_header"),
+    font_size     = 8,
+    position      = "center"
+  ) |>
+  column_spec(1, width = "3cm") |>
+  column_spec(2, width = "3cm") |>
+  collapse_rows(columns = 1, latex_hline = "major", valign = "middle")
+```
+As shown in @tbl-calciumTidy, the participants are separated into two groups, which are the null treatment group and the exercise group, and there are four years; "year 0" can be considered as the initial year.
+
+\newpage
+## Plan-Informed Results
+Prompt: I need two line charts: 1. group means 2. individual lines(Claude Sonnet 4.6 2026/4/13)
+```{r}
+null_raw <- tibble(
+  group       = "Null Treatment",
+  participant = paste0("P", 1:15),
+  Year0 = c(87.3, 59.0, 76.7, 70.6, 54.9, 78.2, 73.7, 61.8, 85.3,
+             82.3, 68.6, 67.8, 66.2, 81.0, 72.3),
+  Year1 = c(86.9, 60.2, 76.5, 76.1, 55.1, 75.3, 70.8, 68.7, 84.4,
+             86.9, 65.4, 69.2, 67.0, 82.3, 74.6),
+  Year2 = c(86.7, 60.0, 75.7, 72.1, 57.2, 69.1, 71.8, 68.2, 79.2,
+             79.4, 72.3, 66.3, 67.0, 86.8, 75.3),
+  Year3 = c(75.5, 53.6, 69.5, 65.3, 49.0, 67.6, 74.6, 57.4, 67.0,
+             77.4, 60.8, 57.9, 56.2, 73.9, 66.1)
+)
+
+diet_raw <- tibble(
+  group       = "Diet/Exercise",
+  participant = paste0("P", 1:16),
+  Year0 = c(83.8, 65.3, 81.2, 75.4, 55.3, 70.3, 76.5, 66.0, 76.7,
+             77.2, 67.3, 50.3, 57.7, 74.3, 74.0, 57.3),
+  Year1 = c(85.5, 66.9, 79.5, 76.7, 58.3, 72.3, 79.9, 70.9, 79.0,
+             74.0, 70.7, 51.4, 57.0, 77.7, 74.7, 56.0),
+  Year2 = c(86.2, 67.0, 84.5, 74.3, 59.1, 70.6, 80.4, 70.3, 76.9,
+             77.8, 68.9, 53.6, 57.5, 72.6, 74.5, 64.7),
+  Year3 = c(81.2, 60.6, 75.2, 66.7, 54.2, 68.6, 71.6, 64.1, 70.3,
+             67.9, 65.9, 48.0, 51.5, 68.0, 65.7, 53.0)
+)
+
+calcium_long <- bind_rows(null_raw, diet_raw) %>%
+  pivot_longer(
+    cols      = Year0:Year3,
+    names_to  = "year",
+    values_to = "calcium"
+  ) %>%
+  mutate(
+    year  = factor(year, levels = c("Year0","Year1","Year2","Year3"),
+                   labels = c("Year 0","Year 1","Year 2","Year 3")),
+    group = factor(group, levels = c("Null Treatment","Diet/Exercise"))
+  )
+
+group_means <- calcium_long %>%
+  group_by(group, year) %>%
+  summarise(mean_ca = mean(calcium), .groups = "drop")
+```
+
+```{r}
+#| label: fig-calciumGroupMean
+#| fig-cap: "Calcium Mean by Group in four years"
+#| fig-pos: H
+#| fig-width: 9
+#| fig-height: 4.5
+ggplot(group_means, aes(x = year, y = mean_ca,
+                        color = group, group = group)) +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 3) +
+  geom_text(aes(label = round(mean_ca, 1)),
+            vjust = -0.9, size = 3.2, show.legend = FALSE) +
+  scale_color_manual(values = c("Null Treatment" = "#4472C4",
+                                "Diet/Exercise"  = "#E15759")) +
+  scale_y_continuous(limits = c(60, 80),
+                     breaks = seq(60, 80, 5)) +
+  labs(
+    x       = NULL,
+    y       = "Mean Calcium (mg/cm²)",
+    color   = "Treatment Group"
+  ) +
+  theme_bw(base_size = 12) +
+  theme(
+    legend.position  = "bottom",
+    panel.grid.minor = element_blank(),
+    plot.title       = element_text(face = "bold", hjust = 0.5)
+  )
+```
+```{r}
+#| label: fig-calciumIndividual
+#| fig-cap: "Individual Ulnar Calcium Data"
+#| fig-pos: H
+#| fig-width: 9
+#| fig-height: 3
+ggplot(calcium_long,
+       aes(x = year, y = calcium,
+           group = interaction(participant, group),
+           color = group)) +
+  geom_line(alpha = 0.45, linewidth = 0.7) +
+  geom_point(alpha = 0.6, size = 1.6) +
+  # overlay group mean as bold line
+  geom_line(data = group_means,
+            aes(x = year, y = mean_ca,
+                group = group, color = group),
+            linewidth = 2, inherit.aes = FALSE) +
+  geom_point(data = group_means,
+             aes(x = year, y = mean_ca, color = group),
+             size = 4, shape = 18, inherit.aes = FALSE) +
+  facet_wrap(~group) +
+  scale_color_manual(values = c("Null Treatment" = "#4472C4",
+                                "Diet/Exercise"  = "#E15759")) +
+  labs(
+    subtitle = "Thin lines = individual women · Thick diamond line = group mean",
+    x        = NULL,
+    y        = "Calcium (mg/cm²)",
+    color    = "Treatment Group"
+  ) +
+  theme_bw(base_size = 12) +
+  theme(
+    legend.position  = "none",
+    panel.grid.minor = element_blank(),
+    strip.text       = element_text(face = "bold", size = 11),
+    plot.title       = element_text(face = "bold", hjust = 0.5),
+    plot.subtitle    = element_text(hjust = 0.5, size = 9,
+                                    color = "grey40")
+  )
+```
+Based on my plan and key prompt I showed before, Claude gave the final figure, which is @fig-calciumGroupMean and @fig-calciumIndividual.\newline
+According to @fig-calciumGroupMean. The mean calcium content of the two groups does not have a great difference, but the two groups have their own small difference. similarity: From year 0 to year 1, calcium content is slightly increased, and from year 2 to year 3, calcium content is significantly decreased. difference: Null Treatment group's calcium content is slightly decreased from year 1 to year 2, but Diet/Exercise group's calcium content is slightly increased from year 1 to year 2. Overall, the Null Treatment's calcium content is always greater than the Diet/Exercise group's calcium content. \newline
+According to @fig-calciumIndividual, it is easy to find that the individual difference is really huge. Some people's calcium content changes a lot, some people's calcium content does not change a lot, some people's calcium content is high, and some people's calcium content is low. This indicates that if we only look at the data of the mean would have a bias on analyzing the data. When looking at the two graphs together, the intervention effect of the Diet/Exercise group was not significant and was uneven. It helped some people increase or maintain their calcium levels in the first two years, but on a four-year scale, the final results of the two groups tended to be consistent. The significant drop in Year 3 was a common phenomenon.
+
+## Generic Results
+Prompt: Create a data visualization that will help me understand these data. Calclium.csv(Claude Sonnet 4.6 Extended 2026/3/31)
+```{r}
+#| label: fig-ClaudePlot1
+#| fig-cap: "Generic Results Calcium Mean by Group in four years"
+
+knitr::include_graphics("ClaudePlot1.png")
+```
+
+```{r}
+#| label: fig-ClaudePlot2
+#| fig-cap: "Generic Results Individual Ulnar Calcium Data"
+
+knitr::include_graphics("ClaudePlot2.png")
+```
+
+\newpage
+## Comparison: Plan-Informed vs. Generic Results
+### similarity
+Both of these methods accurately identified two groups (with n = 15 and n = 16, namely the Null Treatment group and the Diet/Exercise group), and they also generated visually similar line graphs, revealing the same basic data pattern: the calcium values were relatively stable in the first three time points, but began to decline at the final measurement.
+
+### difference
+1. The presentation method of "figure":
+The presentation method of @fig-calciumIndividual and @fig-ClaudePlot2 is different; @fig-calciumIndividual separates two different groups, so @fig-calciumIndividual performs two figures, but @fig-ClaudePlot2 otherwise, it combines two groups in the same figure.\newline
+2. The labels:
+Both @fig-calciumGroupMean and @fig-calciumIndividual use "year 0"," year 1"," year 2", and "year 3" as the x-axis, and for the y-axis, both @fig-calciumGroupMean and @fig-calciumIndividual show the name of y and unit. However, @fig-ClaudePlot1 and @fig-ClaudePlot2 use "Baseline(y0)", "Wave 1(y1)", "Wave 2(y2)", "Wave 3(y3)" as x-axis, and both @fig-ClaudePlot1 and @fig-ClaudePlot2 use" measurement" as y-axis.
+
+\newpage
+# Reflection
+This assignment helps me a lot from several perspectives, such as the skill to manage my work, the skill of writing code, the skill of analyzing the data, and so on. In the following text, I will reflect on it from different aspects.
+
+## Manage My Work
+STAT184 really helps me to learn how to manage my work. Every assignment, I follow the steps of goals, needs, and steps to make comprehensive plans in advance. With these plans, I can manage my work better by having a clear mind while working, and I am able to review and check my work.
+
+## Code Design
+Code design is an important improvement for me, too. There are a lot of assignments that need to submit different versions of the same problem at different steps. For example, tidying the data is the first step, and then comes the graph and plot, and finally is narrative of analysis. For example, Monte Carlo Numerical Integration Simulation, this assignment is first there at assignment 3.4, in that assignment, students need to use plot dot to simulate Monte Carlo Numerical Integration, and the main narrative analysis and improvement is in assignment 4.3. This helps me to record my progress and improvement, and realize which parts are weak for me.
+
+## Analyzing Data
+Data analysis is also an important improvement for me. More practice helps me analyze charts, which is no longer superficial. For example, the busiest airport data from 2021 to 2022, two airports from China both reduced a lot of passenger flow. This data information helps me make a relation to the real world, like there is COVID-19, which causes a reduction in the number of passengers.
+
+\newpage
+# Appendices
+## GenAI Usage Appendix
+1. "Grammarly" was used to help me to check the grammar(Grammarly 2026/4/13)
+2. Prompt: I need two line charts: 1. group means 2. individual lines(Claude Sonnet 4.6 2026/4/13) result can be reference to @fig-calciumIndividual @fig-calciumGroupMean, these two graph is the output given by Claude.
+3. Prompt: Next, I will provide you with some rubrics. When I present my assignment, you should help me review it.(Claude Sonnet 4.6 Extended 2026/4/13), this prompt is helping me to check whether I miss any section.
+\newline
+response:
+\newline
+(1) 4.3 analyzing Data — "analyzing" should have its first letter capitalized: 4.3 Analyzing Data
+\newline
+(2) Section 4.1: It describes the method of plan, but there are no specific examples (such as "In which assignment did I use this method to solve what problem?")
+\newline
+(3) Section 4.2: The content is vague. The phrase "submit different versions" is not specific enough.
+
+## Code Appendix
+```{r}
+#| label: codeAppend
+#| ref-label: !expr knitr::all_labels()
+#| echo: true
+#| eval: false
+```
