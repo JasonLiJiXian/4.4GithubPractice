@@ -2,7 +2,7 @@
 title: "HW #4.3: A First QMD File"
 subtitle: "STAT184"
 author: "JiXianLi"
-date: "April. 13, 2026"
+date: today
 format: 
   pdf: 
     toc: false
